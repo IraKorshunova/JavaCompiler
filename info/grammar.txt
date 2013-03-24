@@ -1,0 +1,38 @@
+ClassDecl -> Modifiers class id  { ClassBody } | EPSILON
+Modifiers -> AccessModifier StaticModifier
+AccessModifier -> public | private | EPSILON
+StaticModifier -> static | EPSILON
+ClassBody -> ClassMember ClassBody | EPSILON
+ClassMember -> Modifiers RestOfClassMember
+RestOfClassMember -> Type RestOfClassMember2 | void RestOfClassMember2
+Type -> id | BasicType
+BasicType -> int | double
+RestOfClassMember2 -> id MethodOrAttr
+MethodOrAttr -> MethodContinue | AttrContinue
+MethodContinue -> ( MethodParams ) { MethodBody }
+MethodParams -> OneParam MethodParamContinue | EPSILON
+OneParam -> Type id
+MethodParamContinue -> , OneParam MethodParamContinue | EPSILON
+AttrContinue -> AssignAttr NextAttr
+AssignAttr -> = Expression | EPSILON
+NextAttr -> , id AttrContinue | ;
+MethodBody -> Statement MethodBody | EPSILON
+Statement -> BlockDecl | Expression ;
+BlockDecl -> { MethodBody }
+Expression -> Term ExprOp  | null
+Term -> intConst | doubleConst | Variable | ( Expression )  | new id ( MethodValues ) Link
+ExprOp -> ArithmOp Term ExprOp  | EPSILON
+Variable -> id FunctionExt Link 
+Link -> . id FunctionExt Link  |  EPSILON
+FunctionExt -> ( MethodValues )  | id | EPSILON 
+MethodValues -> Expression ValueContinue | EPSILON
+ValueContinue -> , Expression ValueContinue | EPSILON
+ArithmOp -> + | - | * | / | =
+Statement -> IfElseBlock | WhileBlock | ReturnBlock | VarDecl
+IfElseBlock -> if ( BoolExpr ) Statement else Statement
+WhileBlock -> while ( BoolExpr ) Statement
+ReturnBlock -> return Expression ;
+VarDecl -> BasicType id = Expression ; 
+BoolExpr -> true | false | Expression CompareOp Expression 
+CompareOp -> > | < | == | !=
+
