@@ -13,8 +13,7 @@ import token.Token;
 import token.TokenType;
 
 /**
- * The {@code Lexer} class represents lexical analyzer for reduced Java
- * programming language.
+ * The {@code Lexer} class represents lexical analyzer for subset of Java grammar.
  * 
  * @author Ira Korshunova
  * 
