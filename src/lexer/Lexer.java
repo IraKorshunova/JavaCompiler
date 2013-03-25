@@ -13,7 +13,8 @@ import token.Token;
 import token.TokenType;
 
 /**
- * The {@code Lexer} class represents lexical analyzer for subset of Java grammar.
+ * The {@code Lexer} class represents lexical analyzer for subset of Java
+ * language.
  * 
  * @author Ira Korshunova
  * 
@@ -55,7 +56,7 @@ public class Lexer {
 			}
 		} while (token != null && position != source.length());
 		if (position != source.length()) {
-			throw new AnalyzerException("Lexical error!", position);
+			throw new AnalyzerException("Lexical error at position # "+ position, position);
 
 		}
 	}
