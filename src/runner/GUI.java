@@ -1,5 +1,6 @@
 package runner;
 
+
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,12 +20,19 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Element;
+import javax.swing.text.Highlighter;
+import javax.swing.text.Utilities;
 
-import lexer.Lexer;
+import exceptions.AnalyzerException;
+
 import parser.Parser;
 import parser.Rule;
+
+import lexer.Lexer;
 import token.Token;
-import exceptions.AnalyzerException;
 
 @SuppressWarnings("serial")
 public class GUI extends JPanel {
@@ -46,6 +54,8 @@ public class GUI extends JPanel {
 
 	public GUI(JFrame frame) {
 		this.frame = frame;
+
+		this.setBackground(new Color(230, 230, 250));
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		codePanel = new JPanel();
 		codePanel.setLayout(new BoxLayout(codePanel, BoxLayout.Y_AXIS));
@@ -56,6 +66,7 @@ public class GUI extends JPanel {
 		codePanel.add(codeScrollPane);
 
 		buttonPanel = new JPanel();
+		buttonPanel.setBackground(new Color(202, 225, 255));
 		buttonPanel.setBorder(BorderFactory.createLineBorder(Color.black));
 
 		openBtn = new JButton("Open");
@@ -105,8 +116,7 @@ public class GUI extends JPanel {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			JavaFilter javaFilter = new JavaFilter();
-			JFileChooser fileChooser = new JFileChooser(new File(System.getProperty("user.dir")
-					+ "/resources"));
+			JFileChooser fileChooser = new JFileChooser(new File(System.getProperty("user.dir")+"/resources"));
 			fileChooser.setFileFilter(javaFilter);
 			fileChooser.setAcceptAllFileFilterUsed(false);
 			int returnValue = fileChooser.showOpenDialog(GUI.this);
@@ -117,7 +127,7 @@ public class GUI extends JPanel {
 						sourceCode += "\n";
 						codeArea.setText(sourceCode);
 					} catch (IOException e1) {
-
+						
 					}
 
 				}
@@ -129,30 +139,33 @@ public class GUI extends JPanel {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			Lexer lexer = new Lexer();
-			Parser parser = new Parser();
-			try {
-				lexArea.setText("");
-				syntaxArea.setText("");
+			lexArea.setText("");
+			syntaxArea.setText("");
 
-				// lexer
-				sourceCode = codeArea.getText();
+			// lexical analysis
+			sourceCode = codeArea.getText();
+			Lexer lexer = new Lexer();
+			try {
 				lexer.tokenize(sourceCode);
 				JOptionPane.showMessageDialog(frame, "Lexical Analysis is completed",
 						"Information", JOptionPane.INFORMATION_MESSAGE);
+			} catch (AnalyzerException lexException) {
+				int errorPosition = lexException.getErrorPosition();
+				JOptionPane.showMessageDialog(frame, "Error at " + errorPosition + " position",
+						"Lexical error", JOptionPane.ERROR_MESSAGE);
+				codeArea.setCaretPosition(errorPosition);
 
-				// parser
-				File grammarFile = new File(System.getProperty("user.dir") + "/info/grammar.txt");
-				parser.parse(grammarFile, lexer.getFilteredTokens());
-				JOptionPane.showMessageDialog(frame, "Parsing is completed!", "Information",
-						JOptionPane.INFORMATION_MESSAGE);
-
-			} catch (AnalyzerException exception) {
-				JOptionPane.showMessageDialog(frame, exception.getMessage(), "Error",
-						JOptionPane.ERROR_MESSAGE);
-			} catch (FileNotFoundException fileNotFoundException) {
-				JOptionPane.showMessageDialog(frame, "File with grammar is not found!", "Error",
-						JOptionPane.ERROR_MESSAGE);
+				Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(
+						Color.RED);
+				Element elem = Utilities.getParagraphElement(codeArea, errorPosition);
+				int start = elem.getStartOffset();
+				int end = elem.getEndOffset();
+				try {
+					codeArea.getHighlighter().addHighlight(start, end, painter);
+				} catch (BadLocationException e1) {
+					JOptionPane.showMessageDialog(frame, "File with code is not found!", "Error",
+							JOptionPane.ERROR_MESSAGE);
+				}
 			} finally {
 				int i = 0;
 				for (Token token : lexer.getTokens()) {
@@ -163,11 +176,31 @@ public class GUI extends JPanel {
 						lexArea.append(i + "   " + token.toString() + "\n");
 					}
 				}
-				
-				for (Rule r : parser.getSequenceOfAppliedRules()) {
-					syntaxArea.append(r.toString() + "\n");
+			}
+
+			// parser
+			Parser parser = null;
+			try {
+				File grammarFile = new File(System.getProperty("user.dir")+ "/info/grammar.txt");
+				parser = new Parser(grammarFile,lexer.getFilteredTokens());
+				parser.parse();
+				JOptionPane.showMessageDialog(frame, "Parsing is completed!", "Information",
+						JOptionPane.INFORMATION_MESSAGE);
+			} catch (AnalyzerException parseException) {
+				JOptionPane.showMessageDialog(frame,
+						"Error after token # " + parseException.getErrorPosition(),
+						"Parsing error", JOptionPane.ERROR_MESSAGE);
+			} catch (FileNotFoundException fileNotFoundException) {
+				JOptionPane.showMessageDialog(frame, "File with grammar is not found!", "Error",
+						JOptionPane.ERROR_MESSAGE);
+			} finally {
+				if (parser != null) {
+					for (Rule r : parser.getSequenceOfAppliedRules()) {
+						syntaxArea.append(r.toString() + "\n");
+					}
 				}
 			}
+
 		}
 	}
 }

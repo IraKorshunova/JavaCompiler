@@ -15,8 +15,9 @@ import java.util.Set;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
-import token.Token;
 import exceptions.AnalyzerException;
+
+import token.Token;
 
 /**
  * The {@code Parser} class represents predictive parser. It accepts only LL(1)
@@ -79,53 +80,32 @@ public class Parser {
 	private List<Rule> sequenceOfAppliedRules;
 
 	/**
-	 * Initializes a newly created {@code Parser} object
-	 * 
-	 */
-
-	public Parser() {
-		rules = new ArrayList<Rule>();
-		alphabet = new HashSet<Symbol>();
-		nameToSymbol = new HashMap<String, Symbol>();
-		alphabet.add(epsilon);
-		firstSet = new HashMap<Symbol, Set<Terminal>>();
-		followSet = new HashMap<Symbol, Set<Terminal>>();
-		parsingTable = new HashMap<SimpleEntry<NonTerminal, Terminal>, Symbol[]>();
-		sequenceOfAppliedRules = new ArrayList<Rule>();
-	}
-
-	/**
-	 * Parses the source, represented by the list of tokens, using the specified
-	 * LL(1) grammar rules
+	 * Constructs {@code Parser} object with specific grammar
 	 * 
 	 * @param grammarFile
 	 *            file with grammar rules
 	 * @param list
-	 *            list of tokens from the input
+	 *            tokens from input source
 	 * @throws FileNotFoundException
-	 *             if file doesn't exist
+	 *             if file with grammar rules wasn't found
 	 * @throws AnalyzerException
-	 *             if the input contains syntax error
+	 *             if syntax error was found in the input
 	 */
-	public void parse(File grammarFile, List<Token> list) throws FileNotFoundException,
+	public Parser(File grammarFile, List<Token> list) throws FileNotFoundException,
 			AnalyzerException {
+		rules = new ArrayList<Rule>();
+		alphabet = new HashSet<Symbol>();
+		nameToSymbol = new HashMap<String, Symbol>();
+		alphabet.add(epsilon);
 		parseRules(grammarFile);
+		firstSet = new HashMap<Symbol, Set<Terminal>>();
+		followSet = new HashMap<Symbol, Set<Terminal>>();
+		parsingTable = new HashMap<SimpleEntry<NonTerminal, Terminal>, Symbol[]>();
+		sequenceOfAppliedRules = new ArrayList<Rule>();
 		calculateFirst();
 		calculateFollow();
 		buildParsingTable();
 		input = convertTokensToStack(list);
-		performParsingAlgorithm();
-	}
-
-	/**
-	 * Returns the sequence of grammar rules, which were applied during the
-	 * parsing
-	 * 
-	 * @return list of applied rules
-	 * 
-	 */
-	public List<Rule> getSequenceOfAppliedRules() {
-		return sequenceOfAppliedRules;
 	}
 
 	/**
@@ -134,7 +114,7 @@ public class Parser {
 	 * @throws AnalyzerException
 	 *             if syntax error was found
 	 */
-	private void performParsingAlgorithm() throws AnalyzerException {
+	public void parse() throws AnalyzerException {
 		Stack<Symbol> stack = new Stack<Symbol>();
 		stack.push(endOfProgram);
 		stack.push(startSymbol);
@@ -149,8 +129,7 @@ public class Parser {
 					input.pop();
 					parsedTokensCount++;
 				} else {
-					throw new AnalyzerException("Syntax error after token #" + parsedTokensCount,
-							parsedTokensCount);
+					throw new AnalyzerException("Syntax error!", parsedTokensCount + 1);
 				}
 			} else {
 				SimpleEntry<NonTerminal, Terminal> tableKey = new SimpleEntry<NonTerminal, Terminal>(
@@ -164,16 +143,25 @@ public class Parser {
 					}
 					sequenceOfAppliedRules.add(getRule((NonTerminal) stackTop, tableEntry));
 				} else {
-					throw new AnalyzerException("Syntax error after token #" + parsedTokensCount,
-							parsedTokensCount);
+					throw new AnalyzerException("Syntax error!", parsedTokensCount + 1);
 				}
 			}
 		} while (!stack.isEmpty() && !input.isEmpty());
 
 		if (!input.isEmpty()) {
-			throw new AnalyzerException("Syntax error after token #" + parsedTokensCount,
-					parsedTokensCount);
+			throw new AnalyzerException("Parsing error!", parsedTokensCount + 1);
 		}
+	}
+
+	/**
+	 * Returns the sequence of grammar rules, which were applied during the
+	 * parsing
+	 * 
+	 * @return list of applied rules
+	 * 
+	 */
+	public List<Rule> getSequenceOfAppliedRules() {
+		return sequenceOfAppliedRules;
 	}
 
 	/**
