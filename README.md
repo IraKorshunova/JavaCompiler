@@ -1,2 +1,2 @@
-This compiler is not completed. It contains only lexer and parser.
+This compiler is not complete: only contains lexer and parser.
 Java syntax specification is reduced.
