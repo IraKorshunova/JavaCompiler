@@ -106,7 +106,7 @@ public class GUI extends JPanel {
 		public void actionPerformed(ActionEvent e) {
 			JavaFilter javaFilter = new JavaFilter();
 			JFileChooser fileChooser = new JFileChooser(new File(System.getProperty("user.dir")
-					+ "/resources"));
+					+ "/src/test/resources"));
 			fileChooser.setFileFilter(javaFilter);
 			fileChooser.setAcceptAllFileFilterUsed(false);
 			int returnValue = fileChooser.showOpenDialog(GUI.this);
@@ -142,7 +142,7 @@ public class GUI extends JPanel {
 						"Information", JOptionPane.INFORMATION_MESSAGE);
 
 				// parser
-				File grammarFile = new File(System.getProperty("user.dir") + "/info/grammar.txt");
+				File grammarFile = new File(System.getProperty("user.dir") + "/src/main/info/grammar.txt");
 				parser.parse(grammarFile, lexer.getFilteredTokens());
 				JOptionPane.showMessageDialog(frame, "Parsing is completed!", "Information",
 						JOptionPane.INFORMATION_MESSAGE);
